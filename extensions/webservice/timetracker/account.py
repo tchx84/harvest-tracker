@@ -14,7 +14,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
-import dbus
 import logging
 
 from jarabe.model import shell
@@ -23,22 +22,10 @@ from jarabe.webservice import account
 
 class Account(account.Account):
 
-    DBUS_SUSPEND_SIGNAL = 'Suspend'
-    DBUS_RESUME_SIGNAL = 'Resume'
-    DBUS_TRACKER_IFACE = 'org.sugarlabs.TimeTracker'
-
     def __init__(self):
         logging.debug('timetracker __init__')
         self._model = shell.get_model()
         self._activity = None
-
-        bus = dbus.SystemBus()
-        bus.add_signal_receiver(self.__suspend_cb,
-                                self.DBUS_SUSPEND_SIGNAL,
-                                self.DBUS_TRACKER_IFACE)
-        bus.add_signal_receiver(self.__resume_cb,
-                                self.DBUS_RESUME_SIGNAL,
-                                self.DBUS_TRACKER_IFACE)
 
     def __suspend_cb(self):
         logging.debug('timetracker __suspend_cb')
