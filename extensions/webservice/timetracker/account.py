@@ -16,25 +16,53 @@
 
 import logging
 
+from gi.repository import Gio
+
 from jarabe.model import shell
 from jarabe.webservice import account
 
 
 class Account(account.Account):
 
+    DCON_SLEEP_PATH = '/sys/devices/platform/dcon/sleep'
+
     def __init__(self):
         logging.debug('timetracker __init__')
-        self._model = shell.get_model()
         self._activity = None
+        self._state = None
 
-    def __suspend_cb(self):
-        logging.debug('timetracker __suspend_cb')
+        self._model = shell.get_model()
+
+        self._monitor = Gio.File.new_for_path(self.DCON_SLEEP_PATH)\
+            .monitor_file(Gio.FileMonitorFlags.NONE, None)
+        self._monitor.connect('changed', self.__file_changed_cb)
+
+    def __file_changed_cb(self, monitor, file, other_file, event):
+        if event != Gio.FileMonitorEvent.CHANGED:
+            return
+
+        with open(self.DCON_SLEEP_PATH) as _file:
+            state = bool(int(_file.read()))
+
+        if state == self._state:
+            return
+
+        logging.debug('timetracker state is %r', state)
+        if state is True:
+            self._deactivate()
+        else:
+            self._activate()
+
+        self._state = state
+
+    def _deactivate(self):
+        logging.debug('timetracker _deactivate')
         self._activity = self._model.get_active_activity()
         if self._activity is not None:
             self._activity.set_active(False)
 
-    def __resume_cb(self):
-        logging.debug('timetracker __resume_cb')
+    def _activate(self):
+        logging.debug('timetracker _activate')
         if self._activity is not None:
             self._activity.set_active(True)
         self._activity = None
