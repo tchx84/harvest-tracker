@@ -56,15 +56,22 @@ class Account(account.Account):
         self._state = state
 
     def _deactivate(self):
-        logging.debug('timetracker _deactivate')
-        self._activity = self._model.get_active_activity()
-        if self._activity is not None:
-            self._activity.set_active(False)
+        activity = self._model.get_active_activity()
+        if activity.is_journal():
+            return
+
+        logging.debug('timetracker deactivate %s', activity.get_bundle_id())
+        activity.set_active(False)
+
+        self._activity = activity
 
     def _activate(self):
-        logging.debug('timetracker _activate')
-        if self._activity is not None:
+        activity = self._model.get_active_activity()
+
+        if activity == self._activity:
+            logging.debug('timetracker activate %s', activity.get_bundle_id())
             self._activity.set_active(True)
+
         self._activity = None
 
     def get_token_state(self):
