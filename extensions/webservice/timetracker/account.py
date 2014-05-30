@@ -14,6 +14,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
+import time
 import logging
 
 from gi.repository import Gio
@@ -28,14 +29,40 @@ class Account(account.Account):
 
     def __init__(self):
         logging.debug('timetracker __init__')
-        self._activity = None
-        self._state = None
 
         self._model = shell.get_model()
+        self._model.connect('active-activity-changed', self.__changed_cb)
+
+        self._times = {}
+        self._actives = {}
+        self._activity = None
 
         self._monitor = Gio.File.new_for_path(self.DCON_SLEEP_PATH)\
             .monitor_file(Gio.FileMonitorFlags.NONE, None)
         self._monitor.connect('changed', self.__file_changed_cb)
+
+        self._state = None
+
+    def __changed_cb(self, model, activity):
+        bundle_id = activity.get_bundle_id()
+        logging.debug('timetracker changed %s', bundle_id)
+
+        if self._activity is not None:
+            self._accumulate(self._activity)
+
+        self._activity = activity
+        self._actives[self._activity] = int(time.time())
+
+    def _accumulate(self, activity):
+        bundle_id = activity.get_bundle_id()
+        _time = int(time.time()) - self._actives[activity]
+
+        if bundle_id not in self._times:
+            self._times[bundle_id] = 0
+
+        self._times[bundle_id] += _time
+
+        logging.debug('timetracker %s has %d' % (bundle_id, self._times[bundle_id]))
 
     def __file_changed_cb(self, monitor, file, other_file, event):
         if event != Gio.FileMonitorEvent.CHANGED:
@@ -56,23 +83,12 @@ class Account(account.Account):
         self._state = state
 
     def _deactivate(self):
-        activity = self._model.get_active_activity()
-        if activity.is_journal():
-            return
-
-        logging.debug('timetracker deactivate %s', activity.get_bundle_id())
-        activity.set_active(False)
-
-        self._activity = activity
+        logging.debug('timetracker deactivate %s', self._activity.get_bundle_id())
+        self._accumulate(self._activity)
 
     def _activate(self):
-        activity = self._model.get_active_activity()
-
-        if activity == self._activity:
-            logging.debug('timetracker activate %s', activity.get_bundle_id())
-            self._activity.set_active(True)
-
-        self._activity = None
+        logging.debug('timetracker activate %s', self._activity.get_bundle_id())
+        self._actives[self._activity] = int(time.time())
 
     def get_token_state(self):
         return self.STATE_VALID
