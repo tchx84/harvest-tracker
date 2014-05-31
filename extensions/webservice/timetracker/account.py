@@ -14,81 +14,21 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
-import time
-import logging
+from gi.repository import GLib
 
-from gi.repository import Gio
-
-from jarabe.model import shell
 from jarabe.webservice import account
+
+from timetracker.timetracker import TimeTracker
 
 
 class Account(account.Account):
 
-    DCON_SLEEP_PATH = '/sys/devices/platform/dcon/sleep'
-
     def __init__(self):
-        logging.debug('timetracker __init__')
+        self._timetracker = None
+        GLib.idle_add(self.__start_cb)
 
-        self._model = shell.get_model()
-        self._model.connect('active-activity-changed', self.__changed_cb)
-
-        self._times = {}
-        self._actives = {}
-        self._activity = None
-
-        self._monitor = Gio.File.new_for_path(self.DCON_SLEEP_PATH)\
-            .monitor_file(Gio.FileMonitorFlags.NONE, None)
-        self._monitor.connect('changed', self.__file_changed_cb)
-
-        self._state = None
-
-    def __changed_cb(self, model, activity):
-        bundle_id = activity.get_bundle_id()
-        logging.debug('timetracker changed %s', bundle_id)
-
-        if self._activity is not None:
-            self._accumulate(self._activity)
-
-        self._activity = activity
-        self._actives[self._activity] = int(time.time())
-
-    def _accumulate(self, activity):
-        bundle_id = activity.get_bundle_id()
-        _time = int(time.time()) - self._actives[activity]
-
-        if bundle_id not in self._times:
-            self._times[bundle_id] = 0
-
-        self._times[bundle_id] += _time
-
-        logging.debug('timetracker %s has %d' % (bundle_id, self._times[bundle_id]))
-
-    def __file_changed_cb(self, monitor, file, other_file, event):
-        if event != Gio.FileMonitorEvent.CHANGED:
-            return
-
-        with open(self.DCON_SLEEP_PATH) as _file:
-            state = bool(int(_file.read()))
-
-        if state == self._state:
-            return
-
-        logging.debug('timetracker state is %r', state)
-        if state is True:
-            self._deactivate()
-        else:
-            self._activate()
-
-        self._state = state
-
-    def _deactivate(self):
-        logging.debug('timetracker deactivate %s', self._activity.get_bundle_id())
-        self._accumulate(self._activity)
-
-    def _activate(self):
-        logging.debug('timetracker activate %s', self._activity.get_bundle_id())
-        self._actives[self._activity] = int(time.time())
+    def __start_cb(self):
+        self._timetracker = TimeTracker()
 
     def get_token_state(self):
         return self.STATE_VALID
