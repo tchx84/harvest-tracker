@@ -33,6 +33,7 @@ class Time(object):
     def deactivate(self):
         if self.active is not None:
             self.time += int(time.time()) - self.active
+            self.active = None
 
     def activate(self):
         if self.active is None:
@@ -62,6 +63,7 @@ class TimeTracker(object):
     def __removed_cb(self, model, activity):
         _time = self._times[activity]
         logging.debug('TimeTracker for %s is %d', _time.bundle_id, _time.time)
+        del self._times[activity]
 
     def __changed_cb(self, model, activity):
         if self._active is not None:
