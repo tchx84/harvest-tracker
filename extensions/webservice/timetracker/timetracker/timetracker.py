@@ -34,6 +34,8 @@ class Time(object):
         if self.active is not None:
             self.time += int(time.time()) - self.active
             self.active = None
+            logging.debug('TimeTracker %s increated to %d',
+                          self.bundle_id, self.time)
 
     def activate(self):
         if self.active is None:
