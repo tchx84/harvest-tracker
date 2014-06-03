@@ -1,7 +1,7 @@
 Name:           timetracker
-Version:        0.0.1
+Version:        0.2.0
 Release:        1
-Summary:        Adjust activities usage time based on PM events
+Summary:        Track sugar activities usage time
 
 License:        GPLv2+
 URL:            https://github.com/tchx84/timetracker
@@ -12,7 +12,7 @@ Requires:       python >= 2.7, sugar >= 0.100
 BuildArch:      noarch
 
 %description
-Service for adjusting Sugar Activities usage time tracking, based on power management events.
+Service for tracking activities usage time, that also consider management events.
 
 %prep
 %setup -q
