@@ -30,6 +30,7 @@ class Time(object):
         self.launch = int(time.time())
         self.active = None
         self.time = 0
+        self.failed = False
 
     def deactivate(self):
         if self.active is not None:
@@ -55,6 +56,7 @@ class TimeTracker(object):
         self._active = None
 
         self._model = shell.get_model()
+        self._model.connect('launch-failed', self.__failed_cb)
         self._model.connect('activity-removed', self.__removed_cb)
         self._model.connect('active-activity-changed', self.__changed_cb)
 
@@ -64,13 +66,21 @@ class TimeTracker(object):
             .monitor_file(Gio.FileMonitorFlags.NONE, None)
         self._monitor.connect('changed', self.__file_changed_cb)
 
+    def __failed_cb(self, model, activity):
+        logging.debug('TimeTracker failed for %s', activity.get_bundle_id())
+        _time = self._times[activity]
+        _time.failed = True
+
     def __removed_cb(self, model, activity):
         if activity is None:
             return
 
         _time = self._times[activity]
+
         logging.debug('TimeTracker for %s is %d', _time.bundle_id, _time.time)
-        self._dump_time(_time)
+        if _time.failed is False:
+            self._dump_time(_time)
+
         del self._times[activity]
 
     def __changed_cb(self, model, activity):
