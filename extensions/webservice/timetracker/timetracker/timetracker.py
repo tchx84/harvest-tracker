@@ -14,6 +14,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
+import os
 import time
 import logging
 
@@ -44,6 +45,7 @@ class Time(object):
 
 class TimeTracker(object):
 
+    HOME_PATH = '~/.timetracker'
     DCON_SLEEP_PATH = '/sys/devices/platform/dcon/sleep'
 
     def __init__(self):
@@ -65,6 +67,7 @@ class TimeTracker(object):
     def __removed_cb(self, model, activity):
         _time = self._times[activity]
         logging.debug('TimeTracker for %s is %d', _time.bundle_id, _time.time)
+        self._dump_time(_time)
         del self._times[activity]
 
     def __changed_cb(self, model, activity):
@@ -97,3 +100,14 @@ class TimeTracker(object):
             self._active.activate()
 
         self._state = state
+
+    def _dump_time(self, time):
+        entry = '%d %d %s\n' % (time.launch, time.time, str(time.bundle_id))
+
+        path = os.path.expanduser(self.HOME_PATH)
+        if not os.path.exists(path):
+            os.mkdir(path)
+
+        log_path = os.path.join(path, 'log')
+        with open(log_path, 'a') as log:
+            log.write(entry)
