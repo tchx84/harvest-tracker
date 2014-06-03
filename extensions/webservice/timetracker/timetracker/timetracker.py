@@ -65,6 +65,9 @@ class TimeTracker(object):
         self._monitor.connect('changed', self.__file_changed_cb)
 
     def __removed_cb(self, model, activity):
+        if activity is None:
+            return
+
         _time = self._times[activity]
         logging.debug('TimeTracker for %s is %d', _time.bundle_id, _time.time)
         self._dump_time(_time)
@@ -73,6 +76,9 @@ class TimeTracker(object):
     def __changed_cb(self, model, activity):
         if self._active is not None:
             self._active.deactivate()
+
+        if activity is None:
+            return
 
         if activity not in self._times:
             self._times[activity] = Time(activity.get_bundle_id())
