@@ -26,7 +26,7 @@ class Tracker(object):
     DCON_SLEEP_PATH = '/sys/devices/platform/dcon/sleep'
 
     def __init__(self):
-        logging.debug('tracker __init__')
+        logging.debug('Tracker __init__')
         self._activity = None
         self._state = None
 
@@ -47,7 +47,7 @@ class Tracker(object):
                 new_level != self._model.ZOOM_ACTIVITY:
             return
 
-        logging.debug('timetracker zoom level is  %d', new_level)
+        logging.debug('Tracker zoom level is  %d', new_level)
         if new_level == self._model.ZOOM_ACTIVITY:
             self._activate()
         else:
@@ -63,7 +63,7 @@ class Tracker(object):
         if state == self._state:
             return
 
-        logging.debug('timetracker state is %r', state)
+        logging.debug('Tracker state is %r', state)
         if state is True:
             self._deactivate()
         else:
@@ -76,7 +76,7 @@ class Tracker(object):
         if activity.is_journal():
             return
 
-        logging.debug('timetracker deactivate %s', activity.get_bundle_id())
+        logging.debug('Tracker deactivate %s', activity.get_bundle_id())
         activity.set_active(False)
 
         self._activity = activity
@@ -85,7 +85,7 @@ class Tracker(object):
         activity = self._model.get_active_activity()
 
         if activity == self._activity:
-            logging.debug('timetracker activate %s', activity.get_bundle_id())
+            logging.debug('Tracker activate %s', activity.get_bundle_id())
             self._activity.set_active(True)
 
         self._activity = None

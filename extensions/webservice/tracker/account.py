@@ -18,7 +18,7 @@ from gi.repository import GLib
 
 from jarabe.webservice import account
 
-from timetracker.timetracker import Tracker
+from tracker.tracker import Tracker
 
 
 class Account(account.Account):
