@@ -82,6 +82,10 @@ class Tracker(object):
         self._activity = activity
 
     def _activate(self):
+        # unless the zoom is not correct
+        if self._model.zoom_level != self._model.ZOOM_ACTIVITY:
+            return
+
         activity = self._model.get_active_activity()
 
         if activity == self._activity:
