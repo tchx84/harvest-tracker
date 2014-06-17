@@ -1,5 +1,5 @@
 Name:           harvest-tracker
-Version:        0.0.1
+Version:        0.3.0
 Release:        1
 Summary:        Adjust activities usage time based on system events
 
