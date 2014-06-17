@@ -33,9 +33,26 @@ class Account(account.Account):
 
         self._model = shell.get_model()
 
+        self._model.zoom_level_changed.connect(self.__zoom_changed_cb)
+
         self._monitor = Gio.File.new_for_path(self.DCON_SLEEP_PATH)\
             .monitor_file(Gio.FileMonitorFlags.NONE, None)
         self._monitor.connect('changed', self.__file_changed_cb)
+
+    def __zoom_changed_cb(self, **kwargs):
+        old_level = kwargs['old_level']
+        new_level = kwargs['new_level']
+
+        # ignore non-useful transitions
+        if old_level != self._model.ZOOM_ACTIVITY and \
+                new_level != self._model.ZOOM_ACTIVITY:
+            return
+
+        logging.debug('timetracker zoom level is  %d', new_level)
+        if new_level == self._model.ZOOM_ACTIVITY:
+            self._activate()
+        else:
+            self._deactivate()
 
     def __file_changed_cb(self, monitor, file, other_file, event):
         if event != Gio.FileMonitorEvent.CHANGED:
